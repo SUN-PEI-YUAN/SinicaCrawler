@@ -1,0 +1,5 @@
+lxml==4.3.3
+requests==2.22.0
+scrapy==1.7.2
+user_agent==0.1.9
+beautifulsoup4==4.7.1
