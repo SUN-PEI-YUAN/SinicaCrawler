@@ -50,17 +50,24 @@ DEFAULT_REQUEST_HEADERS = {
 #    'www_iyp_com_tw.middlewares.WwwIypComTwSpiderMiddleware': 543,
 # }
 
+
+
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
+# proxy port 
+# using Polipo
+# HTTP_PROXY = 'http://localhost:8123'
+HTTP_PROXY = 'http://localhost:8118'
+TOR_PASSWORD = '16:51CEC94110ECC929608B34DD8081414BF11E185EEB0FBC4DA6F739714C' # 用於生成HashedControlPassword的密碼
+SIGNEWNYM_RATE = 10  # new ip rate, minimal value is 10 (seconds)
+NEW_IP_HTTP_CODES = [502, 503, 504, 522, 524, 408, 429, 403]
 DOWNLOADER_MIDDLEWARES = {
    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
    'www_iyp_com_tw.middlewares.RandomUserAgent': 543,
-   'www_iyp_com_tw.middlewares.ProxyMiddleware': 410,
+   'www_iyp_com_tw.middlewares.TorProxyMiddleware': 760,
+   # 'www_iyp_com_tw.middlewares.ProxyMiddleware': 410,
 }
 
-# proxy port 
-# using Polipo
-HTTP_PROXY = 'http://127.0.0.1:8123'
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html

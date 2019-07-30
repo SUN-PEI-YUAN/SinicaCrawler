@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
+
 import scrapy
-
-from scrapy.spidermiddlewares.httperror import HttpError
-from twisted.internet.error import DNSLookupError
-from twisted.internet.error import TimeoutError, TCPTimedOutError
-
-
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup as bs
 from www_iyp_com_tw.items import WwwIypComTwItem
-
+from urllib.parse import urljoin
 import re
+
 
 
 class CrawlerSpider(scrapy.Spider):
     name = 'crawler'
-    # allowed_domains = ['https://ww÷w.iyp.com.tw/']
 
-    start_urls = ['http://www.iyp.com.tw/']
+    start_urls = ['https://www.iyp.com.tw/']
 
     def parsePage(self, response):
         '''Get page data'''
