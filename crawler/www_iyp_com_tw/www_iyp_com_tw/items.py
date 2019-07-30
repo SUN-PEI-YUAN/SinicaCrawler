@@ -11,10 +11,9 @@ import scrapy
 class WwwIypComTwItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    # first_label = scrapy.Field()
-    # second_label = scrapy.Field()
-    # third_label = scrapy.Field()
-    # store_name = scrapy.Field()
-    # phone_num = scrapy.Field()
-    # address = scrapy.Field()
-    pass
+    first_label = scrapy.Field()
+    second_label = scrapy.Field()
+    third_label = scrapy.Field()
+    store_name = scrapy.Field()
+    phone_num = scrapy.Field()
+    address = scrapy.Field()
