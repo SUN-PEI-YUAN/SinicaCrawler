@@ -16,7 +16,7 @@ NEWSPIDER_MODULE = 'www_iyp_com_tw.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'www_iyp_com_tw (+http://www.yahoo.com)'
+#USER_AGENT = 'www_iyp_com_tw (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -27,47 +27,41 @@ ROBOTSTXT_OBEY = False
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 0
+#DOWNLOAD_DELAY = 3
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-COOKIES_ENABLED = False
+#COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-DEFAULT_REQUEST_HEADERS = {
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-  'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6',
-}
+#DEFAULT_REQUEST_HEADERS = {
+#   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+#   'Accept-Language': 'en',
+#}
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-# SPIDER_MIDDLEWARES = {
+#SPIDER_MIDDLEWARES = {
 #    'www_iyp_com_tw.middlewares.WwwIypComTwSpiderMiddleware': 543,
-# }
-
-
+#}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# proxy port 
-# using Polipo
-# HTTP_PROXY = 'http://localhost:8123'
-HTTP_PROXY = 'http://localhost:8118'
-TOR_PASSWORD = '16:51CEC94110ECC929608B34DD8081414BF11E185EEB0FBC4DA6F739714C' # 用於生成HashedControlPassword的密碼
-SIGNEWNYM_RATE = 10  # new ip rate, minimal value is 10 (seconds)
-NEW_IP_HTTP_CODES = [502, 503, 504, 522, 524, 408, 429, 403]
+
+# polipo port
+HTTP_PROXY = 'http://localhost:8123'
+
 DOWNLOADER_MIDDLEWARES = {
+   'www_iyp_com_tw.middlewares.WwwIypComTwDownloaderMiddleware': 542,
    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
    'www_iyp_com_tw.middlewares.RandomUserAgent': 543,
-   'www_iyp_com_tw.middlewares.TorProxyMiddleware': 760,
-   # 'www_iyp_com_tw.middlewares.ProxyMiddleware': 410,
+   'www_iyp_com_tw.middlewares.ProxyMiddleware': 410,
 }
-
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -79,6 +73,7 @@ DOWNLOADER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'www_iyp_com_tw.pipelines.WwwIypComTwPipeline': 300,
+   'www_iyp_com_tw.pipelines.CsvPipeline': 302,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

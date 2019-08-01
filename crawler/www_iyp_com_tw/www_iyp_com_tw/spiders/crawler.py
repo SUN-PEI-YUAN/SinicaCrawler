@@ -1,19 +1,45 @@
 # -*- coding: utf-8 -*-
-
-import scrapy
 from www_iyp_com_tw.items import WwwIypComTwItem
+from scrapy.exporters import CsvItemExporter
+from www_iyp_com_tw.crawler_setting import *
+from www_iyp_com_tw.plugin import Log
 from urllib.parse import urljoin
+from os import makedirs
+import os.path
+import logging
+import scrapy
 import re
 
+
+# 建立資料夾
+makedirs(os.path.join(SAVE_PATH), exist_ok=True)
+
+
+HTML_LOG = Log(logger_name='html', log_fname=HTML_LOGFNAME,
+               init_format=LOG_INIT_FORMAT, log_format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 
 class CrawlerSpider(scrapy.Spider):
     name = 'crawler'
 
-    start_urls = ['https://www.iyp.com.tw/']
+    start_urls = [
+        INDEX,
+        # 'https://www.iyp.com.tw/food-catering/beer-house.html',
+        # 'https://www.iyp.com.tw/food-catering/ice-shops.html',
+        # 'https://www.iyp.com.tw/food-catering/cafe.html',
+    ]
 
-    def parsePage(self, response):
-        '''Get page data'''
+    def start_requests(self):
+        yield scrapy.Request(self.start_urls[0], encoding='utf-8', callback=self.parse)
+
+    def parse(self, response):
+        '''Get index herf'''
+        hrefs = response.xpath('//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
+        for url in hrefs:
+            yield scrapy.Request(urljoin(INDEX, url), callback=self.parsedata)
+
+    def parsedata(self, response):
+        '''爬取網頁資料'''
         item = WwwIypComTwItem()
 
         type_html = response.css('#breadcrumb')[0]
@@ -25,36 +51,28 @@ class CrawlerSpider(scrapy.Spider):
 
         store_names = data_html.xpath('//li/h3[1]/a[1]/@title').getall()
         phone_nums = data_html.xpath("//li[@class='tel' and 1]/img[@class='rollLoad' and 1]/@data-url").getall()
-        phone_nums = [re.split('//', i)[-1] for i in phone_nums]
+        phone_nums = [urljoin('https:', i) for i in phone_nums if len(i) > 0]
         addresses = [re.split('/', tag.attrib['go-map'])[-1]
                      for tag in data_html.xpath("//li/ul/li[2]/span[2]")]
 
         data = zip(store_names, phone_nums, addresses)
-
+        
+        # 資料流
         for store_name, phone_num, address in data:
-            yield {
-                'first_label': fst,
-                'second_label': snd,
-                'third_label': trd,
-                'store_name': store_name,
-                'phone_num': phone_num,
-                'address': address,
-            }
+            item['first_label'] = fst
+            item['second_label'] = snd
+            item['third_label'] = trd
+            item['store_name'] = store_name
+            item['phone_num'] = phone_num
+            item['address'] = address
+            yield item
+        
+        HTML_LOG.logger(response.url, response.status, level='info')
 
-        next_page_href = response.xpath(
-            "//div[4]/a[@class='next' and last()]/@href").get()
-        next_page = urljoin(self.start_urls[0], next_page_href)
+        # 下一頁
+        next_page_href = response.xpath('//*[@id="content"]/div[4]/a[last()]/@href').get()
+        next_page = urljoin('https://www.iyp.com.tw/', next_page_href)
+        print('>>>>>>>>>', next_page)
 
         if next_page is not None:
-            yield response.follow(next_page, self.parse)
-
-    def getRequestHref(self, response):
-        '''Get index herf'''
-        hrefs = response.xpath(
-            '//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
-        for url in hrefs:
-            yield scrapy.Request(urljoin('http://www.iyp.com.tw/', url), callback=self.parsePage)
-
-    def parse(self, response):
-        '''Index page request'''
-        yield scrapy.Request(self.start_urls[0], encoding='utf-8', callback=self.getRequestHref)
+            yield response.follow(next_page, self.parsedata)
