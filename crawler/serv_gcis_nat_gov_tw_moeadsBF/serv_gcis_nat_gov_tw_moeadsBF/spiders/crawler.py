@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from scrapy.exceptions import DropItem
 from scrapy.exporters import CsvItemExporter
 from serv_gcis_nat_gov_tw_moeadsBF.items import ServGcisNatGovTwMoeadsbfItem
 from serv_gcis_nat_gov_tw_moeadsBF.crawler_setting import *
