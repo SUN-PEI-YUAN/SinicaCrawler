@@ -5,9 +5,11 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-from scrapy import signals
 from www_iyp_com_tw.settings import HTTP_PROXY
 from user_agent import generate_user_agent
+from scrapy import signals
+import re
+
 
 class WwwIypComTwSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -103,20 +105,32 @@ class WwwIypComTwDownloaderMiddleware(object):
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
 
+
 class RandomUserAgent(object):
     '''隨機生成user-agent'''
+
     def process_request(self, request, spider):
+
+        match = re.search('ajax.php', request.url)
         ua = generate_user_agent()
+
+        request.headers['User-Agent'] = ua
         request.headers['Accept-Encoding'] = 'gzip, deflate, br'
-        request.headers['Upgrade-Insecure-Requests'] = '1'
-        request.headers['Referer'] = 'https://www.iyp.com.tw'
         request.headers['Host'] = 'www.iyp.com.tw'
         request.headers['Connection'] = 'keep-alive'
-        request.headers['User-Agent'] = ua
-        request.headers['dont_redirect'] = 'True'
+
+        if match:
+            request.headers['Accept']: 'image/webp,image/apng,image/*,*/*;q=0.8'
+            request.headers['Accept-Language'] = 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6'
+            request.headers['Referer'] = f'{request.url}'
+        else:
+            request.headers['Referer'] = 'https://www.iyp.com.tw'
+            request.headers['Upgrade-Insecure-Requests'] = '1'
+            request.headers['dont_redirect'] = 'True'
 
 
 class ProxyMiddleware(object):
     '''tor洋蔥代理伺服器介接'''
+
     def process_request(self, request, spider):
         request.meta['proxy'] = HTTP_PROXY

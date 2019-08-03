@@ -33,7 +33,7 @@ ROBOTSTXT_OBEY = False
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -72,8 +72,10 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'www_iyp_com_tw.pipelines.WwwIypComTwPipeline': 300,
-   'www_iyp_com_tw.pipelines.CsvPipeline': 302,
+   'scrapy.pipelines.images.ImagesPipeline': None,
+   'www_iyp_com_tw.pipelines.ImagePipeline': 1,
+   'www_iyp_com_tw.pipelines.WwwIypComTwPipeline': 299,
+   'www_iyp_com_tw.pipelines.CsvPipeline': 996,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

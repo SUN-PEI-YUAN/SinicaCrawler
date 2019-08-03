@@ -5,8 +5,17 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
-from www_iyp_com_tw.crawler_setting import DATA_FNAME
-from scrapy.exporters import CsvItemExporter
+from www_iyp_com_tw.crawler_setting import DATA_FNAME, SAVE_PATH
+from scrapy.pipelines.images import ImagesPipeline
+from scrapy.exceptions import DropItem
+from scrapy import Request
+from os import remove
+import pytesseract
+import os.path
+try:
+    from PIL import Image
+except ImportError:
+    import Image
 
 
 class WwwIypComTwPipeline(object):
@@ -20,20 +29,37 @@ class WwwIypComTwPipeline(object):
         return item
 
 
-class CsvPipeline(CsvItemExporter):
+class CsvPipeline(object):
     '''紀錄一共有幾筆pdf'''
 
     def __init__(self):
         self.fname = DATA_FNAME
-        self.file = open(self.fname, "wb")
-        self.exporter = CsvItemExporter(file=self.file,
-                                        fields_to_export=['first_label', 'second_label', 'third_label', 'store_name', 'phone_num', 'address', ])
-        self.exporter.start_exporting()
-
-    def close_spider(self, spider):
-        self.exporter.finish_exporting()
-        self.file.close()
+        self.file = open(self.fname, "w")
+        self.file.write('first_label,second_label,third_label,store_name,phone_num,address\n')
 
     def process_item(self, item, spider):
-        self.exporter.export_item(item)
+        # 先提取數字之後放回csv資料當中
+        while True:
+            if os.path.exists(item['img_path']):        
+                with Image.open(item['img_path']) as img:
+                    item['phone_num'] = pytesseract.image_to_string(img)
+            break
+        self.file.write(f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']}\n")
+        remove(item['img_path'])
+        return item
+
+    def close_spider(self, spider):
+        self.file.close()
+
+
+class ImagePipeline(ImagesPipeline):
+
+    def get_media_requests(self, item, info):
+        yield Request(item['phone_url'])
+
+    def item_completed(self, results, item, info):
+        image_paths = [x['path'] for ok, x in results if ok]
+        if not image_paths:
+            raise DropItem("Item contains no images")
+        item['img_path'] = os.path.join(SAVE_PATH, image_paths[0])
         return item

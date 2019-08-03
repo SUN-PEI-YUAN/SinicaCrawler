@@ -16,4 +16,6 @@ class WwwIypComTwItem(scrapy.Item):
     third_label = scrapy.Field()
     store_name = scrapy.Field()
     phone_num = scrapy.Field()
+    phone_url = scrapy.Field()
     address = scrapy.Field()
+    img_path = scrapy.Field()
