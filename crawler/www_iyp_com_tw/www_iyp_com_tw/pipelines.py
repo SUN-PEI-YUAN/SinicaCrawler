@@ -40,12 +40,15 @@ class CsvPipeline(object):
     def process_item(self, item, spider):
         # 先提取數字之後放回csv資料當中
         while True:
-            if os.path.exists(item['img_path']):        
-                with Image.open(item['img_path']) as img:
-                    item['phone_num'] = pytesseract.image_to_string(img)
+            if os.path.exists(item['img_path']):
+                try:
+                    with Image.open(item['img_path']) as img:
+                        item['phone_num'] = pytesseract.image_to_string(img)
+                        remove(item['img_path'])
+                except:
+                    item['phone_num'] = None
             break
         self.file.write(f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']}\n")
-        remove(item['img_path'])
         return item
 
     def close_spider(self, spider):

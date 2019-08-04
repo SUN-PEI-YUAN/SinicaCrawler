@@ -4,17 +4,12 @@ from scrapy.exporters import CsvItemExporter
 from www_iyp_com_tw.crawler_setting import *
 from www_iyp_com_tw.plugin import Log
 from urllib.parse import urljoin
-from uuid import uuid4
 from os import makedirs
 import os.path
 import logging
 import scrapy
 import re
 
-
-from scrapy.http import Response
-
-from io import BytesIO
 
 # 建立資料夾
 makedirs(os.path.join(SAVE_PATH), exist_ok=True)
@@ -42,7 +37,7 @@ class CrawlerSpider(scrapy.Spider):
         '''取得所有要訪問的連結'''
         hrefs = response.xpath(
             '//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
-        for url in hrefs[0:1]:
+        for url in hrefs:
             yield scrapy.Request(urljoin(INDEX, url), callback=self.parsedata)
 
     def parsedata(self, response):
