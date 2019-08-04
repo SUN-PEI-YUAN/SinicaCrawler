@@ -9,6 +9,7 @@ from www_iyp_com_tw.crawler_setting import DATA_FNAME, SAVE_PATH
 from scrapy.pipelines.images import ImagesPipeline
 from scrapy.exceptions import DropItem
 from scrapy import Request
+from time import sleep
 from os import remove
 import pytesseract
 import os.path
@@ -35,20 +36,26 @@ class CsvPipeline(object):
     def __init__(self):
         self.fname = DATA_FNAME
         self.file = open(self.fname, "w")
-        self.file.write('first_label,second_label,third_label,store_name,phone_num,address\n')
+        self.file.write('first_label,second_label,third_label,store_name,phone_num,address,img_path\n')
 
     def process_item(self, item, spider):
         # 先提取數字之後放回csv資料當中
         while True:
             if os.path.exists(item['img_path']):
+                try_freq = 0
                 try:
                     with Image.open(item['img_path']) as img:
                         item['phone_num'] = pytesseract.image_to_string(img)
                         remove(item['img_path'])
                 except:
-                    item['phone_num'] = None
+                    try_freq += 1
+                    if try_freq < 5:
+                        sleep(1)  
+                        continue
+                    else:
+                        item['phone_num'] = item['img_path']
             break
-        self.file.write(f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']}\n")
+        self.file.write(f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']},{item['img_path']}\n")
         return item
 
     def close_spider(self, spider):
