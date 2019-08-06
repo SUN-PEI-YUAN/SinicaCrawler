@@ -60,13 +60,14 @@ class CrawlerSpider(scrapy.Spider):
         data = zip(store_names, phone_nums, addresses)
 
         # 資料流
-        for store_name, phone_url, address in data:
+        for store_name, phone_num, address in data:
             item = WwwIypComTwItem()
             item['first_label'] = fst
             item['second_label'] = snd
             item['third_label'] = trd
             item['store_name'] = store_name
-            item['phone_url'] = phone_url
+            # item['phone_url'] = phone_url
+            item['phone_num'] = phone_num
             item['address'] = address
             yield item
 
