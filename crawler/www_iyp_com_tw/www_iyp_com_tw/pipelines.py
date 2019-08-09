@@ -11,13 +11,7 @@ from scrapy.exceptions import DropItem
 from scrapy import Request
 from time import sleep
 from os import remove
-import pytesseract
 import os.path
-try:
-    from PIL import Image
-except ImportError:
-    import Image
-
 
 class WwwIypComTwPipeline(object):
     def process_item(self, item, spider):
@@ -35,28 +29,11 @@ class CsvPipeline(object):
 
     def __init__(self):
         self.fname = DATA_FNAME
-        self.file = open(self.fname, "w")
+        self.file = open(self.fname, "w", encoding='utf-8')
         self.header = 'first_label,second_label,third_label,store_name,phone_num,address\n'
         self.file.write(self.header)
 
     def process_item(self, item, spider):
-        # 先提取數字之後放回csv資料當中
-
-        # while True:
-            # if os.path.exists(item['img_path']):
-            #     try_freq = 0
-            #     try:
-            #         with Image.open(item['img_path']) as img:
-            #             item['phone_num'] = pytesseract.image_to_string(img)
-            #             remove(item['img_path'])
-            #     except:
-            #         try_freq += 1
-            #         if try_freq < 5:
-            #             sleep(1)  
-            #             continue
-            #         else:
-            #             item['phone_num'] = item['img_path']
-            # break
         row_data = f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']}\n"
         self.file.write(row_data)
         return item
@@ -74,6 +51,5 @@ class ImagePipeline(ImagesPipeline):
         image_paths = [x['path'] for ok, x in results if ok]
         if not image_paths:
             raise DropItem("Item contains no images")
-        # item['img_path'] = os.path.join(SAVE_PATH, image_paths[0])
         item['phone_num'] = os.path.join(SAVE_PATH, image_paths[0])
         return item

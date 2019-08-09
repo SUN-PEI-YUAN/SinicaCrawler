@@ -2,6 +2,7 @@
 from www_iyp_com_tw.items import WwwIypComTwItem
 from scrapy.exporters import CsvItemExporter
 from www_iyp_com_tw.crawler_setting import *
+from scrapy.crawler import CrawlerProcess
 from www_iyp_com_tw.plugin import Log
 from urllib.parse import urljoin
 from os import makedirs
@@ -80,3 +81,26 @@ class CrawlerSpider(scrapy.Spider):
 
         if next_page is not None:
             yield response.follow(next_page, self.parsedata)
+
+
+        # 先提取數字之後放回csv資料當中
+        # import pytesseract
+        # try:
+        #     from PIL import Image
+        # except ImportError:
+        #     import Image
+        # while True:
+            # if os.path.exists(item['img_path']):
+            #     try_freq = 0
+            #     try:
+            #         with Image.open(item['img_path']) as img:
+            #             item['phone_num'] = pytesseract.image_to_string(img)
+            #             remove(item['img_path'])
+            #     except:
+            #         try_freq += 1
+            #         if try_freq < 5:
+            #             sleep(1)  
+            #             continue
+            #         else:
+            #             item['phone_num'] = item['img_path']
+            # break

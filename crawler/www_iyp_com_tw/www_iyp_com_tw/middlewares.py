@@ -5,6 +5,7 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+from twisted.internet.error import TimeoutError
 from www_iyp_com_tw.settings import HTTP_PROXY
 from user_agent import generate_user_agent
 from scrapy import signals
@@ -100,7 +101,11 @@ class WwwIypComTwDownloaderMiddleware(object):
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
-        pass
+
+        # http://www.ishenping.com/ArtInfo/1333885.html
+        if isinstance(exception,TimeoutError):
+            return request
+        # pass
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
