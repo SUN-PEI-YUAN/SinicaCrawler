@@ -1,4 +1,4 @@
-apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y
 # basic install
 sudo apt install -y sudo htop git gcc cpp vim tor polipo wget curl dos2unix tesseract-ocr libtesseract-dev
 
@@ -16,8 +16,9 @@ source .bashrc
 
 pyenv install 3.7.4
 pyenv global 3.7.4
-
+pip install --upgrade pip 
+pip install virtualenv
 #git
 
 cp torrc /etc/tor/torrc
-cp polipo.conf /etc/polipo/polipo.conf
+cp polipo.conf /etc/polipo/config
