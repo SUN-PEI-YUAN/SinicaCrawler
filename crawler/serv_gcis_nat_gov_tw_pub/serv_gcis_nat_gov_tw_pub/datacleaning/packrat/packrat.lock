@@ -3,7 +3,45 @@ PackratVersion: 0.5.0
 RVersion: 3.5.2
 Repos: CRAN=https://cran.rstudio.com/
 
+Package: Rcpp
+Source: CRAN
+Version: 1.0.2
+Hash: d04e441a8d398e3d3a71f294c07fa94d
+
+Package: askpass
+Source: CRAN
+Version: 1.1
+Hash: 6f6c430e3cd0dd7d48f447700f4d7e7f
+Requires: sys
+
+Package: curl
+Source: CRAN
+Version: 4.0
+Hash: 43ba5c33f68914a98361fb056d32872d
+
+Package: jsonlite
+Source: CRAN
+Version: 1.6
+Hash: 5f969e213e966135393e3e304abf3f49
+
 Package: packrat
 Source: CRAN
 Version: 0.5.0
 Hash: 498643e765d1442ba7b1160a1df3abf9
+
+Package: pdftools
+Source: CRAN
+Version: 2.2
+Hash: f59676f510f9bb02d2d648a5cdf237e7
+Requires: Rcpp, qpdf
+
+Package: qpdf
+Source: CRAN
+Version: 1.1
+Hash: ca4eaa18c29186f6fec363c3e973dd5b
+Requires: Rcpp, askpass, curl
+
+Package: sys
+Source: CRAN
+Version: 3.2
+Hash: aaa3f56d4255306a32ea30df8ef63901
