@@ -1,0 +1,428 @@
+#! /usr/bin/R
+
+# ----------------------------------------------------------------------
+#
+# Dependence library: 'pdftools', 'jsonlite', 'readxl', 'sqldf', 'xml2'
+#
+# ----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+#
+# 下載營業項目說明清單
+#   參考連結: https://gcis.nat.gov.tw/cod/index.jsp
+download.file(url = 'https://gcis.nat.gov.tw/cod/v7_ref_v8.xls', destfile = 'comlevel.xls')
+. <- data.frame(readxl::read_excel('comlevel.xls'))
+colnames(.) <- c('V7', 'V7_result', 'V8', 'V8_result')
+comp.levels <- unique(unlist(.[, c('V7_result', 'V8_result')]))
+comp.levels <- comp.levels[!is.na(comp.levels)]
+#
+# ----------------------------------------------------------------------
+
+is.GenericNo <- function(x, ...) {
+  # 檢測x向量是否為統一編號
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  cond <- '[0-9]{8}'
+  return(grepl(pattern = cond, x = x, ...))
+}
+
+is.goverment <- function(x, ...) {
+  # 檢測x向量是否為政府名稱
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  gov.name <- c(
+    "基隆市政府", "新北市政府", "臺北縣政府", 
+    "台北縣政府", "台北巿政府", "臺北巿政府", 
+    "新竹縣政府", "新竹市政府", "苗栗縣政府", 
+    "台中市政府", "臺中市政府", "南投縣政府",
+    "雲林縣政府", "嘉義縣政府", "嘉義市政府",
+    "台南市政府", "臺南市政府", "高雄巿政府", 
+    "屏東縣政府", "宜蘭縣政府", "花蓮縣政府", 
+    "台東縣政府", "臺東縣政府", "澎湖縣政府", 
+    "金門縣政府", "連江縣政府", "桃園市政府", 
+    "彰化縣政府"
+  )
+  return(x %in% gov.name)
+}
+
+is.address <- function(x, simpleCheck = FALSE, custom = NULL, ...) {
+  # 檢測x向量是否為地址
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  if (simpleCheck)
+  {
+    cond <- '[縣市鄉鎮市區路街村里巷弄號之樓室]'
+  }
+  else
+  {
+    cond <- '[0-9|０|１|２|３|４|５|６|７|８|９][縣市鄉鎮市區路街村里巷弄號之樓室]'
+  }
+  if (!is.null('custom')) {
+    cond <- custom
+  }
+  grepl(pattern = cond, x = x, ...)
+}
+
+is.dateformat <- function(x, ...) {
+  # 檢測x向量是否為日期
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  cond <- '[0-9]{2,3}/[0-9]{2}/[0-9]{2}'
+  return(grepl(pattern = cond, x = x, ...))
+}
+
+is.ServicesNo <- function(x, ...) {
+  # 檢測x向量是否為營業項目
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  cond <- '[A-Z+][A-Z0-9]{6}'
+  return(grepl(pattern = cond, x = x, ...))
+}
+
+is.chinese <- function(x, ...) {
+  # 移除x中含有的中文
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  cond <- '[\u4e00-\u9fa5]{1,}'
+  return(grepl(pattern = cond, x = x, ...))
+}
+
+rm.chinese <- function(x, ...) {
+  # 移除x中含有的中文
+  #
+  # Args:
+  #   x: 字串向量
+  #
+  # Returns:
+  #   logical
+  cond <- '[\u4e00-\u9fa5]{1,}'
+  return(gsub(pattern = cond, replacement = '', x = x, ...))
+}
+
+makePath <- function(filepath, currentFile=NULL, ReplaceFile=NULL, newPath=NULL) {
+  # 操作檔案路徑，如果只有filepath參數，則回傳檔案名稱，
+  # 如果currentFile和ReplaceFile存在，則會修改檔案副名檔名(可運用在檔案輸出)，
+  # newPath存在，則會合併newpath路徑和檔案名稱
+  #
+  # Args:
+  #   filepath: 檔案位置
+  #   currentFile: 要修改的副檔案
+  #   ReplaceFile: 修改的副檔案
+  #   newPath: 要添加的新路徑
+  # Returns:
+  #   character
+  filename <- basename(filepath)
+
+  if (is.null(newPath))
+  {
+    newPath <- '.'
+  }
+
+  if (!is.null(currentFile) & !is.null(ReplaceFile))
+  {
+    filename <- gsub(currentFile, ReplaceFile, filename)
+  }
+
+  filename <- file.path(newPath, filename)
+  return(filename)
+}
+
+strsplit2 <- function(x, split, type = "remove", perl = FALSE, ...) {
+  # strsplit 進化版
+  #
+  if (type == "remove")
+  {
+    out <- base::strsplit(x = x, split = split, perl = perl, ...)
+  }
+  else if (type == "before")
+  {
+    # split before the delimiter and keep it
+    out <- base::strsplit(x = x, split = paste0("(?<=.)(?=", split, ")"), perl = TRUE, ...)
+  }
+  else if (type == "after")
+  {
+    # split after the delimiter and keep it
+    out <- base::strsplit(x = x, split = paste0("(?<=", split, ")"), perl = TRUE, ...)
+  }
+  else
+  {
+    # wrong type input
+    stop("type must be remove, after or before!")
+  }
+  return(out)
+}
+
+output <- function(fun) {
+  # output formater
+  #
+  # Args:
+  #   fun: 執行的程式碼
+  #
+  # Returns:
+  #   NULL
+  sink('out.txt')
+  print(fun)
+  sink()
+}
+
+sz <- function(obj, unit = 'MB') {
+  # object size formater
+  format(object.size(obj), unit = unit)
+}
+
+
+DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
+OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
+
+pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
+pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
+creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
+replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
+deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
+
+
+
+checkSum1 <- function(x) {
+  # 檢查是否為政府名稱，統一編號，序號
+  #
+  # Args:
+  #   fun: 執行的程式碼
+  #
+  # Returns:
+  #   NULL
+  cond <- is.goverment(x) |    # 是否為政府名稱
+    is.GenericNo(x) |          # 是否為統一編號
+    grepl('^[0-9]*$', x)       # 是否為序號
+  return(cond)
+}
+
+dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='./pdfError.log', ...) {
+  # 將pdf檔轉換成文字
+  #
+  # Args:
+  #   pdfpath: pdf檔案路徑
+  #   delectHeader: 刪除pdf頭部，預設1:3行
+  #   errorLogPath: error.log放置處，預設在R的目前位置(getwd())
+  #
+  # Returns:
+  #   如果pdf輸出有失敗的部分為輸出log檔
+
+  pdftext <- pdftools::pdf_text(pdf = pdfpath)
+  pdftext <- strsplit(pdftext, split = '\n')
+  pdftext <- lapply(pdftext, function(x) x[delectHeader])
+  pdftext <- unlist(pdftext)
+  browser()
+
+  # 確認pdf是否為空白頁或是沒資料
+  if (identical(pdftext, character(0)))
+  {
+    return(NA)
+  }
+  else if (length(pdftext) == 1 & length(strsplit(pdftext, ' ')) < 2)
+  {
+    return(NA)
+  }
+  else
+  {
+    # 日期資料
+    date_finder <- grepl(pattern = '[0-9]{2,3}/[0-9]{2}/[0-9]{2}', x = pdftext)
+    mainData <- which(date_finder)
+
+    # 其他資料
+    other_data <- !grepl(pattern = '[0-9]{2,3}/[0-9]{2}/[0-9]{2}', x = pdftext) & !grepl(pattern = '[0-9]{8}', x = pdftext)
+    subData <- which(other_data)
+
+    # 切割其他資料，準備合併到主資料
+    splitSubData <- split(subData, cut(subData, c(mainData, max(subData))))
+
+    # 合併
+    dt <- cbind(pdftext[mainData], splitSubData)
+
+    dt <- apply(dt, 1, function(x) {
+      x <- c(x[[1]], pdftext[x[[2]]])
+      paste(x, collapse = ' ')
+    })
+
+    names(dt) <- NULL
+    dt <- as.list(dt)
+
+    tryCatch({
+      lapply(dt, function(x) {
+        # browser()
+        x <- unlist(strsplit(x, '\\s+'))
+        x <- x[x != '']
+
+        # 時間字串位置
+        whichTime <- which(is.dateformat(x))
+
+        # 主要地址位置，有其他未合併的地址
+        addressCheck <- is.address(x = x[1:(whichTime - 2)], simpleCheck = TRUE) & !checkSum1(x[1:(whichTime - 2)])
+        whichMainAddress <- max(which(addressCheck))
+
+        # 合併地址
+        for (string in 1:length(x))
+        {
+          # 向量位置小於五之處理方式(地址以前)
+          if (string < whichMainAddress)
+          {
+            check <- checkSum1(x[string])
+            # 如果遵守以上規則
+            if (check)
+            {
+              next
+            }
+            # 反之
+            else
+            {
+              checkSelf <- nchar(x[string])
+              if (checkSelf < 3)
+              {
+                # 檢查前一個元素是否為cond1
+                prevCheck <- checkSum1(x[string - 1])
+                if (prevCheck)
+                {
+                  nextCheck <- checkSum1(x[string + 1])
+                  if (!nextCheck & nchar(x[string + 1]))
+                  {
+                    x[string] <- paste(x[string], x[string + 1])
+                    x[string + 1] <- ''
+                    next
+                  }
+                }
+              }
+            }
+          }
+
+          else if (string == whichMainAddress)
+          {
+            # 如果有全型逗號的機制
+            cond <- grepl(pattern = '，', x = x[string])
+            browser()
+            if (cond)
+            {
+              tmp <- unlist(strsplit(x[string], '，'))
+              tmp <- ifelse(is.address(tmp), tmp, NA)
+              x[string] <- tmp[!is.na(tmp)]
+              next
+            }
+            
+          }
+
+          else if (string > whichMainAddress)
+          {
+            # 如果是主要地址或是時間
+            if (string %in% c(whichTime - 1, whichTime))
+            {
+              next
+            }
+
+            # 遇到地址之處理機制
+            cond <- is.address(x[string])
+            if (cond)
+            {
+              x[whichMainAddress] <- paste0(x[whichMainAddress], x[string])
+              x[string] <- ''
+              next
+            }
+            
+            # 遇到全型或半型數字
+            cond <- grepl(pattern = '^[0-9|０|１|２|３|４|５|６|７|８|９]{1,3}', x[string]) | is.address(x[string])
+            if (cond)
+            {
+              cond <- grepl(pattern = '之$', x[whichMainAddress])
+              if (cond)
+              {
+                x[whichMainAddress] <- paste0(x[whichMainAddress], x[string], sep = '')
+                x[string] <- ''
+                next
+              }
+              
+            }
+            
+            # 遇到營業項目說明之處理機制: 組合營業項目說明
+            cond2 <- is.ServicesNo(x[string])
+            if (cond2)
+            {
+              next
+            }
+            else
+            {
+              x[string] <- ''
+              next
+            }
+          }
+
+        }
+
+        x <- x[x != '']
+        print(x)
+        browser()
+        return(x)
+        
+      })
+
+    }, error = function(e) {
+      ### 輸出 error.log ###
+      if (!file.exists(errorLogPath))
+      {
+        errorLogPath <- file(errorLogPath)
+      }
+      else
+      {
+        errorLogPath <- errorLogPath
+      }
+      errorMsg <- sprintf("[%s] PDF: %s | status: %s", Sys.time(), pdfpath, e)
+      write(errorMsg, file = errorLogPath, append = TRUE)
+      ### 輸出 error.log ###
+    })
+  }
+}
+
+dumpText(testing_file1)  
+
+for (i in creates) {
+  dumpText(i)  
+}
+
+testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
+
+
+
+
+
+
+# run run run XDDDDDD
+
+library(parallel)
+cl <- makeCluster(detectCores())
+clusterExport(cl, c('is.GenericNo', 'is.goverment', 'is.address', 'is.dateformat', 'is.ServicesNo', 'is.chinese', 'rm.chinese'))
+
+starttime <- Sys.time()
+creates.result <- parLapply(cl, creates, dumpText)
+replaces.result <- parLapply(cl, replaces, dumpText)
+deletes.result <- parLapply(cl, deletes, dumpText)
+endtime <-  Sys.time() - starttime
