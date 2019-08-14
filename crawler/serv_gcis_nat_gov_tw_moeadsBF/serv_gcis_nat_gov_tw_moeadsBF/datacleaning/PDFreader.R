@@ -53,7 +53,7 @@ is.goverment <- function(x, ...) {
   return(x %in% gov.name)
 }
 
-is.address <- function(x, simpleCheck = FALSE, custom = NULL, ...) {
+is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE, ...) {
   # 檢測x向量是否為地址
   #
   # Args:
@@ -65,12 +65,29 @@ is.address <- function(x, simpleCheck = FALSE, custom = NULL, ...) {
   {
     cond <- '[縣市鄉鎮市區路街村里巷弄號之樓室]'
   }
+  else if (use.place)
+  {
+    cond <- c(
+      "基隆市", "新北市", "臺北縣", 
+      "台北縣", "台北巿", "臺北巿", 
+      "新竹縣", "新竹市", "苗栗縣", 
+      "台中市", "臺中市", "南投縣",
+      "雲林縣", "嘉義縣", "嘉義市",
+      "台南市", "臺南市", "高雄巿", 
+      "屏東縣", "宜蘭縣", "花蓮縣", 
+      "台東縣", "臺東縣", "澎湖縣", 
+      "金門縣", "連江縣", "桃園市", 
+      "彰化縣"
+    )
+    cond <- paste(cond, collapse = '|')
+  }
+  else if (!is.null(custom))
+  {
+    cond <- custom
+  }
   else
   {
-    cond <- '[0-9|０|１|２|３|４|５|６|７|８|９][縣市鄉鎮市區路街村里巷弄號之樓室]'
-  }
-  if (!is.null('custom')) {
-    cond <- custom
+    cond <- '[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}[縣市鄉鎮市區路街村里巷弄號之樓室]'
   }
   grepl(pattern = cond, x = x, ...)
 }
@@ -176,36 +193,6 @@ strsplit2 <- function(x, split, type = "remove", perl = FALSE, ...) {
   return(out)
 }
 
-output <- function(fun) {
-  # output formater
-  #
-  # Args:
-  #   fun: 執行的程式碼
-  #
-  # Returns:
-  #   NULL
-  sink('out.txt')
-  print(fun)
-  sink()
-}
-
-sz <- function(obj, unit = 'MB') {
-  # object size formater
-  format(object.size(obj), unit = unit)
-}
-
-
-DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
-OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
-
-pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
-pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
-creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
-replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
-deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
-
-
-
 checkSum1 <- function(x) {
   # 檢查是否為政府名稱，統一編號，序號
   #
@@ -220,7 +207,7 @@ checkSum1 <- function(x) {
   return(cond)
 }
 
-dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='./pdfError.log', ...) {
+dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfError.log', ...) {
   # 將pdf檔轉換成文字
   #
   # Args:
@@ -235,7 +222,6 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='./pdfE
   pdftext <- strsplit(pdftext, split = '\n')
   pdftext <- lapply(pdftext, function(x) x[delectHeader])
   pdftext <- unlist(pdftext)
-  browser()
 
   # 確認pdf是否為空白頁或是沒資料
   if (identical(pdftext, character(0)))
@@ -269,121 +255,172 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='./pdfE
 
     names(dt) <- NULL
     dt <- as.list(dt)
-
-    tryCatch({
+    browser()
+    result <- tryCatch({
       lapply(dt, function(x) {
-        # browser()
+        
+        browser()
+        
         x <- unlist(strsplit(x, '\\s+'))
         x <- x[x != '']
-
+    
         # 時間字串位置
         whichTime <- which(is.dateformat(x))
-
+        
+        # 資本額位置
+        whichMoney <- whichTime - 1
+        
+        # 政府名稱位置
+        whichGov <- which(is.goverment(x[1:whichMoney]))
+        
+        # 商業名稱位置
+        whichName <- whichGov + 1
+        
+        # 統一編號位置
+        whichEncode <- whichGov - 1
+        
+        # 序號位置
+        whichNo <- whichEncode - 1
+        
         # 主要地址位置，有其他未合併的地址
-        addressCheck <- is.address(x = x[1:(whichTime - 2)], simpleCheck = TRUE) & !checkSum1(x[1:(whichTime - 2)])
-        whichMainAddress <- max(which(addressCheck))
-
+        addressCheck <- is.address(x = x[whichName:whichMoney], use.place = TRUE) & !checkSum1(x[whichName:whichMoney])
+        whichMainAddress <- min(which(addressCheck)) + whichGov
+        
+        # 確認負責人名字是否完整
+        adminCheck <- whichMainAddress - whichName
+        
         # 合併地址
+        # 處理方式為以主要地址為準，依序處理
         for (string in 1:length(x))
         {
+          
+          # ----------------------------------------------------------------------
+          
           # 向量位置小於五之處理方式(地址以前)
-          if (string < whichMainAddress)
+          
+          if (string <= whichMainAddress)
           {
-            check <- checkSum1(x[string])
-            # 如果遵守以上規則
-            if (check)
-            {
+            
+            check <- string %in% c(whichNo, whichEncode, whichGov, whichName)
+            
+            if (check) 
               next
-            }
-            # 反之
-            else
+            
+            else 
             {
-              checkSelf <- nchar(x[string])
-              if (checkSelf < 3)
+              # 抓出負責人名稱，如果分裂則合併
+              if ((adminCheck == 2 & string != whichMainAddress) | string == whichName + 1)
+                next
+              else 
               {
-                # 檢查前一個元素是否為cond1
-                prevCheck <- checkSum1(x[string - 1])
-                if (prevCheck)
-                {
-                  nextCheck <- checkSum1(x[string + 1])
-                  if (!nextCheck & nchar(x[string + 1]))
-                  {
-                    x[string] <- paste(x[string], x[string + 1])
-                    x[string + 1] <- ''
-                    next
-                  }
-                }
+                x[whichName + 1] <- paste(x[whichName + 1], x[string], collapse = '', sep = '')
+                x[string] <- ''
+                next
               }
-            }
-          }
+            
 
-          else if (string == whichMainAddress)
-          {
-            # 如果有全型逗號的機制
-            cond <- grepl(pattern = '，', x = x[string])
-            browser()
-            if (cond)
-            {
-              tmp <- unlist(strsplit(x[string], '，'))
-              tmp <- ifelse(is.address(tmp), tmp, NA)
-              x[string] <- tmp[!is.na(tmp)]
-              next
+              # 檢查地址
+              if (string == whichMainAddress)
+              {
+                cond_1 <- grepl( '，', x[string])
+
+                # 檢查地址是否分裂
+                if (cond_1)
+                {
+                  tmp <- unlist(strsplit(x[string], '，'))
+                  tmp <- ifelse(is.address(tmp), tmp, NA)
+                  tmp <- tmp[!is.na(tmp)]
+                  x[whichMainAddress] <- paste(tmp, collapse = '', sep = '')
+                  next
+                }
+                
+                else if (string + 1 == whichMoney | x[string] == '') 
+                  next
+            
+                else 
+                {
+                  x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
+                  next
+                }
+                
+              }
+              
             }
             
           }
+            
+          # ----------------------------------------------------------------------
 
-          else if (string > whichMainAddress)
+          if (string > whichMainAddress)
           {
             # 如果是主要地址或是時間
-            if (string %in% c(whichTime - 1, whichTime))
-            {
+            check <- string %in% c(whichMoney, whichTime)
+          
+            if (check) 
               next
-            }
-
-            # 遇到地址之處理機制
-            cond <- is.address(x[string])
-            if (cond)
-            {
-              x[whichMainAddress] <- paste0(x[whichMainAddress], x[string])
-              x[string] <- ''
-              next
-            }
             
-            # 遇到全型或半型數字
-            cond <- grepl(pattern = '^[0-9|０|１|２|３|４|５|６|７|８|９]{1,3}', x[string]) | is.address(x[string])
-            if (cond)
+            else
             {
-              cond <- grepl(pattern = '之$', x[whichMainAddress])
-              if (cond)
+              # 遇到營業項目說明之處理機制: 組合營業項目說明
+              cond_1 <- is.ServicesNo(x[string])
+              # 是全型或半型數字
+              cond_2 <- grepl('^[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}', x[string])
+              # 主要地址後面是否有之
+              cond_3 <- grepl('之$', x[whichMainAddress])
+              # 是否為地址
+              cond_4 <- is.address(x[string])
+              cond_5 <- grepl('之[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}', x[string])
+              
+              cond_6 <- grepl('[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}$', x[string])
+              
+              # 資本額與日期
+              if (cond_1) 
+                next
+              
+              
+              # 開頭為數字: 全型或半型數字
+              else if (cond_2)
               {
-                x[whichMainAddress] <- paste0(x[whichMainAddress], x[string], sep = '')
+                if (cond_3 | cond_4)
+                {
+                  x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next  
+                }
+              }
+              
+              else if (cond_6)
+              {
+                if (cond_5)
+                {
+                  x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next
+                }
+              }
+              
+              
+              # 其他處理方式
+              else
+              {
                 x[string] <- ''
                 next
               }
               
             }
-            
-            # 遇到營業項目說明之處理機制: 組合營業項目說明
-            cond2 <- is.ServicesNo(x[string])
-            if (cond2)
-            {
-              next
-            }
-            else
-            {
-              x[string] <- ''
-              next
-            }
+          
           }
-
+          # ----------------------------------------------------------------------
         }
 
         x <- x[x != '']
         print(x)
         browser()
-        return(x)
-        
+        return(x)        
       })
+
+
+
 
     }, error = function(e) {
       ### 輸出 error.log ###
@@ -396,13 +433,41 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='./pdfE
         errorLogPath <- errorLogPath
       }
       errorMsg <- sprintf("[%s] PDF: %s | status: %s", Sys.time(), pdfpath, e)
-      write(errorMsg, file = errorLogPath, append = TRUE)
+      write(errorMsg, file = errorLogPath, append = TRUE, sep = '\n')
       ### 輸出 error.log ###
     })
+    
+    return(result)
+    
   }
 }
 
-dumpText(testing_file1)  
+testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
+dumpText(testing_file2)
+
+
+
+
+
+
+DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
+OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
+
+pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
+pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
+creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
+replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
+deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
+
+
+testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
+dumpText(testing_file2)
+
+
+
+
+
+
 
 for (i in creates) {
   dumpText(i)  
@@ -410,7 +475,7 @@ for (i in creates) {
 
 testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
 
-
+testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
 
 
 
