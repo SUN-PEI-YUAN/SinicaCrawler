@@ -2,3 +2,6 @@ packrat/lib*/
 packrat/init.R
 packrat/packrat.opts
 packrat/src
+.Rhistory
+pdfError.log
+error.txt
