@@ -87,9 +87,22 @@ is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE,
   }
   else
   {
-    cond <- '[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}[縣市鄉鎮市區路街村里巷弄號之樓室]'
+    .setRange <- function(s, ...)
+      sprintf(s, ...)
+    
+    num_rule <- .setRange(numFrame, 1, 4)
+    addr_rule <- .setRange(addressFrame, 1, '')
+    
+    numFrame <- '[0-9|０|１|２|３|４|５|６|７|８|９]{%s,%s}'
+    addressFrame <- '[縣市鄉鎮市區路街村里巷弄號之樓室]{%s,%s}'
+    
+    rule1 <- paste0(addr_rule, num_rule)
+    rule2 <- paste0(num_rule, addr_rule)
+    
+    return(grepl(pattern = rule1, x = x) | grepl(pattern = rule2, x = x))
+    
   }
-  grepl(pattern = cond, x = x, ...)
+  return(grepl(pattern = cond, x = x, ...))
 }
 
 is.dateformat <- function(x, ...) {
@@ -309,13 +322,16 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
             else 
             {
               # 抓出負責人名稱，如果分裂則合併
-              if ((adminCheck == 2 & string != whichMainAddress) | string == whichName + 1)
-                next
-              else 
+              if (string < whichMainAddress)
               {
-                x[whichName + 1] <- paste(x[whichName + 1], x[string], collapse = '', sep = '')
-                x[string] <- ''
-                next
+                if (adminCheck == 2 | string == whichName + 1)
+                  next
+                else 
+                {
+                  x[whichName + 1] <- paste(x[whichName + 1], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next
+                }
               }
             
 
@@ -334,9 +350,9 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
                   next
                 }
                 
-                else if (string + 1 == whichMoney | x[string] == '') 
+                else if (string + 1 == whichMoney | x[string] == '' | string == whichMainAddress) 
                   next
-            
+                
                 else 
                 {
                   x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
@@ -361,39 +377,57 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
             
             else
             {
+              # 數字存在位置: 最左邊
+              numLocation_1 <- grepl('^[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}.', x[string])
+              
+              # 數字存在位置: 中間
+              numLocation_2 <- grepl('.[0-9|０|１|２|３|４|５|６|７|８|９]{1,3}.', x[string])
+                
+              # 數字存在位置: 最右邊
+              numLocation_3 <- grepl('[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}$', x[string])  
+
+
               # 遇到營業項目說明之處理機制: 組合營業項目說明
               cond_1 <- is.ServicesNo(x[string])
+              
               # 是全型或半型數字
               cond_2 <- grepl('^[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}', x[string])
+              
               # 主要地址後面是否有之
               cond_3 <- grepl('之$', x[whichMainAddress])
+              
               # 是否為地址
               cond_4 <- is.address(x[string])
-              cond_5 <- grepl('之[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}', x[string])
-              
-              cond_6 <- grepl('[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}$', x[string])
               
               # 資本額與日期
               if (cond_1) 
                 next
               
-              
-              # 開頭為數字: 全型或半型數字
-              else if (cond_2)
+              else if (numLocation_1)
               {
+                # 開頭是之
                 if (cond_3 | cond_4)
                 {
                   x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
                   x[string] <- ''
-                  next  
+                  next
                 }
               }
               
-              else if (cond_6)
+              else if (numLocation_2) 
               {
-                if (cond_5)
-                {
+                if (cond_4) {
                   x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next
+                }
+              }
+              
+              else if (numLocation_3)
+              {
+                if (cond_4)
+                {
+                  x[whichMainAddress] <-paste(x[whichMainAddress], x[string], collapse = '', sep = '')
                   x[string] <- ''
                   next
                 }
