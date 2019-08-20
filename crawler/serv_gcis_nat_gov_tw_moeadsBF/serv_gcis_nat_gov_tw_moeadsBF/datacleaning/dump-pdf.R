@@ -10,11 +10,11 @@
 #
 # 下載營業項目說明清單
 #   參考連結: https://gcis.nat.gov.tw/cod/index.jsp
-download.file(url = 'https://gcis.nat.gov.tw/cod/v7_ref_v8.xls', destfile = 'comlevel.xls')
-. <- data.frame(readxl::read_excel('comlevel.xls'))
-colnames(.) <- c('V7', 'V7_result', 'V8', 'V8_result')
-comp.levels <- unique(unlist(.[, c('V7_result', 'V8_result')]))
-comp.levels <- comp.levels[!is.na(comp.levels)]
+# download.file(url = 'https://gcis.nat.gov.tw/cod/v7_ref_v8.xls', destfile = 'comlevel.xls')
+# . <- data.frame(readxl::read_excel('comlevel.xls'))
+# colnames(.) <- c('V7', 'V7_result', 'V8', 'V8_result')
+# comp.levels <- unique(unlist(.[, c('V7_result', 'V8_result')]))
+# comp.levels <- comp.levels[!is.na(comp.levels)]
 #
 # ----------------------------------------------------------------------
 
@@ -180,6 +180,20 @@ makePath <- function(filepath, currentFile=NULL, ReplaceFile=NULL, newPath=NULL)
   filename <- file.path(newPath, filename)
   return(filename)
 }
+
+# .fileProcess <- function(i, o) {
+#   # 將檔案移動到指定位置
+#   #
+#   # Args:
+#   #   i: 輸入之檔案或資料夾
+#   #   o: 輸入之檔案或資料夾
+#   #
+#   # Returns:
+#   #   NULL
+#   input <- 
+#   
+#   
+# } 
 
 strsplit2 <- function(x, split, type = "remove", perl = FALSE, ...) {
   # strsplit 進化版
@@ -384,7 +398,7 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
               numLocation_2 <- grepl('.[0-9|０|１|２|３|４|５|６|７|８|９]{1,3}.', x[string])
                 
               # 數字存在位置: 最右邊
-              numLocation_3 <- grepl('[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}$', x[string])  
+              numLocation_3 <- grepl('.[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}$', x[string])  
 
 
               # 遇到營業項目說明之處理機制: 組合營業項目說明
@@ -398,6 +412,9 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
               
               # 是否為地址
               cond_4 <- is.address(x[string])
+              
+              # 是否為數字
+              cond_5 <- grepl('[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}', x[string])
               
               # 資本額與日期
               if (cond_1) 
@@ -421,6 +438,13 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
                   x[string] <- ''
                   next
                 }
+                
+                else
+                {
+                  x[string] <- ''
+                  next
+                }
+                
               }
               
               else if (numLocation_3)
@@ -433,12 +457,22 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
                 }
               }
               
-              
               # 其他處理方式
               else
               {
-                x[string] <- ''
-                next
+                if (cond_3 & cond_5)
+                {
+                  x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next
+                }
+                
+                else
+                {
+                  x[string] <- ''
+                  next
+                }
+                
               }
               
             }
@@ -453,9 +487,6 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
         return(x)        
       })
 
-
-
-
     }, error = function(e) {
       ### 輸出 error.log ###
       if (!file.exists(errorLogPath))
@@ -469,6 +500,9 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
       errorMsg <- sprintf("[%s] PDF: %s | status: %s", Sys.time(), pdfpath, e)
       write(errorMsg, file = errorLogPath, append = TRUE, sep = '\n')
       ### 輸出 error.log ###
+    }, finally = function() {
+      ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
+      
     })
     
     return(result)
@@ -476,52 +510,4 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
   }
 }
 
-testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
-dumpText(testing_file2)
 
-
-
-
-
-
-DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
-OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
-
-pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
-pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
-creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
-replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
-deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
-
-
-testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
-dumpText(testing_file2)
-
-
-
-
-
-
-
-for (i in creates) {
-  dumpText(i)  
-}
-
-testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
-
-testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
-
-
-
-
-# run run run XDDDDDD
-
-library(parallel)
-cl <- makeCluster(detectCores())
-clusterExport(cl, c('is.GenericNo', 'is.goverment', 'is.address', 'is.dateformat', 'is.ServicesNo', 'is.chinese', 'rm.chinese'))
-
-starttime <- Sys.time()
-creates.result <- parLapply(cl, creates, dumpText)
-replaces.result <- parLapply(cl, replaces, dumpText)
-deletes.result <- parLapply(cl, deletes, dumpText)
-endtime <-  Sys.time() - starttime
