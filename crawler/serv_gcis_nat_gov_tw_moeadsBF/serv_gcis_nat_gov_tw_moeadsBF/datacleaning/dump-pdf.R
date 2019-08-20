@@ -171,6 +171,14 @@ makePath <- function(filepath, currentFile=NULL, ReplaceFile=NULL, newPath=NULL)
   {
     newPath <- '.'
   }
+  
+  else if (!is.null(newPath))
+  {
+    if (!dir.exists(newPath)) 
+    {
+      dir.create(newPath)
+    }  
+  }
 
   if (!is.null(currentFile) & !is.null(ReplaceFile))
   {
@@ -180,20 +188,6 @@ makePath <- function(filepath, currentFile=NULL, ReplaceFile=NULL, newPath=NULL)
   filename <- file.path(newPath, filename)
   return(filename)
 }
-
-# .fileProcess <- function(i, o) {
-#   # 將檔案移動到指定位置
-#   #
-#   # Args:
-#   #   i: 輸入之檔案或資料夾
-#   #   o: 輸入之檔案或資料夾
-#   #
-#   # Returns:
-#   #   NULL
-#   input <- 
-#   
-#   
-# } 
 
 strsplit2 <- function(x, split, type = "remove", perl = FALSE, ...) {
   # strsplit 進化版
@@ -234,6 +228,32 @@ checkSum1 <- function(x) {
   return(cond)
 }
 
+.listToJson <- function(x) {
+  # 將list資料轉成json格式
+  #
+  # Args:
+  #   x: 資料
+  #
+  # Returns:
+  #   json 字串
+  li <- list()
+  li$id <- x[1]
+  li$unique_label <- x[2]
+  li$gov_name <- x[3]
+  li$store_name <- x[4]
+  li$admin <- x[5]
+  li$address <- x[6]
+  li$assets <- x[7]
+  li$create_date <- x[8]
+  if (length(x) >= 9)
+  {
+    li$labels <- x[9:length(x)]  
+  } else {
+    li$labels <- 'NULL'
+  }
+  return(li)
+}
+
 dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfError.log', ...) {
   # 將pdf檔轉換成文字
   #
@@ -243,7 +263,7 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
   #   errorLogPath: error.log放置處，預設在R的目前位置(getwd())
   #
   # Returns:
-  #   如果pdf輸出有失敗的部分為輸出log檔
+  #   list，如果pdf輸出有失敗的部分為輸出log檔
 
   pdftext <- pdftools::pdf_text(pdf = pdfpath)
   pdftext <- strsplit(pdftext, split = '\n')
@@ -282,11 +302,11 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
 
     names(dt) <- NULL
     dt <- as.list(dt)
-    browser()
+    # browser()
     result <- tryCatch({
       lapply(dt, function(x) {
         
-        browser()
+        # browser()
         
         x <- unlist(strsplit(x, '\\s+'))
         x <- x[x != '']
@@ -482,8 +502,8 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
         }
 
         x <- x[x != '']
-        print(x)
-        browser()
+        # print(x)
+        # browser()
         return(x)        
       })
 
@@ -500,10 +520,13 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
       errorMsg <- sprintf("[%s] PDF: %s | status: %s", Sys.time(), pdfpath, e)
       write(errorMsg, file = errorLogPath, append = TRUE, sep = '\n')
       ### 輸出 error.log ###
-    }, finally = function() {
-      ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
-      
     })
+    
+    ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
+    
+    o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
+    file.copy(pdfpath, o)
+    file.remove(pdfpath)
     
     return(result)
     
@@ -511,3 +534,33 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
 }
 
 
+json_dump <- function(i, o = NULL, outdir = './經濟部-商業登記資料查詢json/') {
+  # 將dumpText function回傳之內容轉換成json
+  #
+  # Args:
+  #   i: 檔案路徑
+  #   o: 輸出路徑
+  #
+  # Returns:
+  #   logical
+  if (is.null(o))
+  {
+    ofile <- makePath(filepath = i, currentFile = 'pdf', ReplaceFile = 'json', newPath = outdir)
+  }
+  else 
+  {
+    ofile <- o
+  }
+    
+  dt <- dumpText(i)
+  
+  jsontext <- jsonlite::toJSON(lapply(dt, .listToJson), auto_unbox = TRUE)
+  
+  writeLines(jsontext, ofile)
+}
+
+
+  
+  
+
+  
