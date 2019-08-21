@@ -63,6 +63,9 @@ is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE,
   #
   # Returns:
   #   logical
+  .setRange <- function(s, ...)
+    sprintf(s, ...)
+  
   if (simpleCheck)
   {
     cond <- '[縣|市|鄉|鎮|市|區|路|街|村|里|巷|弄|號|之|樓|室]'
@@ -90,14 +93,13 @@ is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE,
   }
   else
   {
-    .setRange <- function(s, ...)
-      sprintf(s, ...)
     
-    num_rule <- .setRange(numFrame, 1, 4)
-    addr_rule <- .setRange(addressFrame, 1, '')
     
     numFrame <- '[0-9|０|１|２|３|４|５|６|７|８|９|一|二|三|四|五|六|七|八|九|壹|貳|參|肆|伍|陸|柒|捌|玖]{%s,%s}'
     addressFrame <- '[縣|市|鄉|鎮|市|區|路|街|村|里|巷|弄|號|之|樓|室]{%s,%s}'
+    
+    num_rule <- .setRange(numFrame, 1, 4)
+    addr_rule <- .setRange(addressFrame, 1, '')
     
     rule1 <- paste0(addr_rule, num_rule)
     rule2 <- paste0(num_rule, addr_rule)
@@ -539,15 +541,15 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
         errorLogPath <- errorLogPath
       }
       errorMsg <- sprintf("[%s] PDF: %s | status: %s", Sys.time(), pdfpath, e)
-      write(errorMsg, file = errorLogPath, append = TRUE, sep = '\n')
+      write(errorMsg, file = errorLogPath, append = TRUE)
       ### 輸出 error.log ###
     })
     
     ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
     
-    o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
-    file.copy(pdfpath, o)
-    file.remove(pdfpath)
+    # o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
+    # file.copy(pdfpath, o)
+    # file.remove(pdfpath)
 
     return(result)
     
@@ -576,16 +578,9 @@ json_dump <- function(i, o = NULL, outdir = './經濟部-商業登記資料查�
   
   jsontext <- jsonlite::toJSON(lapply(dt, .listToJson), auto_unbox = TRUE)
   
-  writeLines(jsontext, ofile)
+  writeLines(jsontext, ofile, useBytes=TRUE)
 }
 
-
-  
-pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
-pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
-creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
-replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
-deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
 
 
 DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
@@ -593,58 +588,19 @@ DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
 SAVE_PATH <- '../data/經濟部-商業登記資料查詢pdf(封存)/'
 
 OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
+
+  
+. <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
 
 dir.create(SAVE_PATH)
-file.copy(from = pdf.list1, to = makePath(filepath = pdf.list1, newPath = SAVE_PATH), )
-file.remove(pdf.list1)
 
+file.copy(from = ., to = makePath(filepath = ., newPath = SAVE_PATH))
 
-testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
-aaaa= dumpText(testing_file2)
-
-
-testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
-aaa = dumpText(testing_file1)
-
-
-testing_file3 <- file.path(DATA_PATH,  '高雄市政府105年11月商業設立登記營業項目清冊.pdf')
-json_dump(testing_file3)
+file.remove(.)
 
 
 
-
-
-testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
-dumpText(testing_file3)
-
-
-
-
-
-
-
-for (i in creates) {
-  dumpText(i)  
-}
-
-testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf')
-
-testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
-
-
-
-
-DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
-
-SAVE_PATH <- '../data/經濟部-商業登記資料查詢pdf(封存)/'
-
-OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
-
-
-pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
-pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
-
-pdf
+pdf_list <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
 
 creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
 replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
@@ -652,16 +608,11 @@ deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目�
 
 
 
-testing_file <- file.path(DATA_PATH,  '新北市政府108年06月商業設立登記營業項目清冊.pdf')
-
-# dumpText(testing_file3)
-json_dump(testing_file)
-
-
-
-for (i in creates)
-  json_dump(i)
+for (filename in creates) {
+  print(paste0('>>> ', filename))
+  json_dump(filename)
+}
 
 
+dumpText(file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf'))
 
-  
