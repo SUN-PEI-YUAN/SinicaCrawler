@@ -65,7 +65,7 @@ is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE,
   #   logical
   if (simpleCheck)
   {
-    cond <- '[縣市鄉鎮市區路街村里巷弄號之樓室]'
+    cond <- '[縣|市|鄉|鎮|市|區|路|街|村|里|巷|弄|號|之|樓|室]'
   }
   else if (use.place)
   {
@@ -96,8 +96,8 @@ is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE,
     num_rule <- .setRange(numFrame, 1, 4)
     addr_rule <- .setRange(addressFrame, 1, '')
     
-    numFrame <- '[0-9|０|１|２|３|４|５|６|７|８|９]{%s,%s}'
-    addressFrame <- '[縣市鄉鎮市區路街村里巷弄號之樓室]{%s,%s}'
+    numFrame <- '[0-9|０|１|２|３|４|５|６|７|８|９|一|二|三|四|五|六|七|八|九|壹|貳|參|肆|伍|陸|柒|捌|玖]{%s,%s}'
+    addressFrame <- '[縣|市|鄉|鎮|市|區|路|街|村|里|巷|弄|號|之|樓|室]{%s,%s}'
     
     rule1 <- paste0(addr_rule, num_rule)
     rule2 <- paste0(num_rule, addr_rule)
@@ -305,7 +305,7 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
 
     names(dt) <- NULL
     dt <- as.list(dt)
-    browser()
+    # browser()
     result <- tryCatch({
       lapply(dt, function(x) {
         
@@ -439,6 +439,9 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
               # 是否為數字
               cond_5 <- grepl('[0-9|０|１|２|３|４|５|６|７|８|９]{1,4}', x[string])
               
+              # 簡單對字串做地址判斷
+              cond_6 <- is.address(x[string], simpleCheck = T) & nchar(x[string]) <= 3
+              
               # 資本額與日期
               if (cond_1) 
                 next
@@ -490,6 +493,21 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
                   next
                 }
                 
+                else if (cond_6)
+                {
+                  x[whichMainAddress] <- paste(x[whichMainAddress], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next
+                }
+                
+                # 針對新北市pdf處理
+                else if (x[string] == '局')
+                {
+                  x[whichGov] <- paste(x[whichGov], x[string], collapse = '', sep = '')
+                  x[string] <- ''
+                  next
+                }
+                
                 else
                 {
                   x[string] <- ''
@@ -505,8 +523,8 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
         }
 
         x <- x[x != '']
-        print(x)
-        browser()
+        # print(x)
+        # browser()
         return(x)        
       })
 
@@ -527,10 +545,10 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
     
     ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
     
-    # o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
-    # file.copy(pdfpath, o)
-    # file.remove(pdfpath)
-    
+    o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
+    file.copy(pdfpath, o)
+    file.remove(pdfpath)
+
     return(result)
     
   }
@@ -613,6 +631,36 @@ testing_file1 <- file.path(DATA_PATH,  '台中市政府108年03月商業解散�
 
 testing_file2 <- '/Users/marksun/Desktop/台中市政府108年03月商業解散登記營業項目清冊.pdf'
 
+
+
+
+DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
+
+SAVE_PATH <- '../data/經濟部-商業登記資料查詢pdf(封存)/'
+
+OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
+
+
+pdf.list1 <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
+pdf.list2 <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
+
+pdf
+
+creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
+replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
+deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
+
+
+
+testing_file <- file.path(DATA_PATH,  '新北市政府108年06月商業設立登記營業項目清冊.pdf')
+
+# dumpText(testing_file3)
+json_dump(testing_file)
+
+
+
+for (i in creates)
+  json_dump(i)
 
 
 
