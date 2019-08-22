@@ -200,10 +200,16 @@ File -> Open Project -> [選擇SinicaCrawler/crawler/www_example_com/www_example
 
 之後重新啟動 R session即可開始作業，詳細使用方法可以至套件官方網站查看。
 
+關於程式執行所留下的日誌檔，爬蟲的日誌檔請保留在 data/資料夾底下，格式為Crawler<option>_<日期>.log，option為爬蟲屬性(抓HTML還是pdf)，
+如果被爬取網站有 POST 資訊可以紀錄，可新增 crawlered 檔來紀錄發送過哪些 POST，以免下次重複爬取造成主機負擔；至於資料清理的部分，沒有一定的規範，
+但是清理的錯誤log檔必須在datacleaning/ 資料夾底下，日後爬蟲系統會搜尋日誌檔以及抓取的資料，所以盡可能按照此規範做開發，python 要製作日誌檔可以
+使用logging模組，其他爬蟲專案的plugin.py為日誌檔格式，可依照此檔案做撰寫，謝謝！
+
 
 [相關說明]
 
 python modules => https://docs.python.org/3/tutorial/modules.html
 python class => https://docs.python.org/3/tutorial/classes.html
 scrapy官方網站說明 => https://scrapy.org/doc/
+python modules: logging => https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
 R Library: packrat => https://rstudio.github.io/packrat/
