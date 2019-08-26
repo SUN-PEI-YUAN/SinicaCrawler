@@ -37,12 +37,12 @@
 
 (一) requestment.txt 與 venv/
 
-requestment.txt 是 python 套件管理的設定檔，在安裝套件之前，請先在 python3.7.4 上安裝 virtualenv
-套件，然後在 SinicaCrawler/ 資料夾底下(終端機環境中)使用:
+requestment.txt是python套件管理的設定檔，在安裝套件之前，請先在python3.7.4上安裝virtualenv
+套件，然後在SinicaCrawler/資料夾底下(終端機環境中)使用:
 
     > virtualenv venv
 
-指令創建 python 虛擬環境，這時 SinicaCrawler/ 資料夾底下會多出 venv/ 資料夾，但我們要如何使用虛擬環境中的 python？
+指令創建python虛擬環境，這時SinicaCrawler/資料夾底下會多出venv/資料夾，但我們要如何使用虛擬環境中的python？
 
 Windows:
     > source venv/Scripts/activate
@@ -81,7 +81,7 @@ framework），理由是因為框架具有一定架構，我們只要按照框�
 
 大致說明完框架的利弊後，接下來要講解如何建立專案，假設我們終端機位置在SinicaCrawler/crawler
 底下(可使用指令確認位置，unix: pwd | windows: dir)，我們要建立新的爬蟲專案，專案名稱盡量以
-要爬取網站之連結做命名，譬如: https://www.example.com 我們就命名為 www_example_com。
+要爬取網站之連結做命名，譬如: https://www.example.com 我們就命名為www_example_com。
 我們可以利用scrapy的cli功能建立專案:
 
     > scrapy startproject www_example_com
@@ -132,23 +132,23 @@ framework），理由是因為框架具有一定架構，我們只要按照框�
             ├── __pycache__
             └── crawler.py                 # 爬蟲主要腳本，此腳本會使用到上層目錄之檔案
 
-之後我們要來建立資料清理專案，請先安裝 R 語言(3.6.1)以及 Rstudio，然後再安裝 packrat 套件:
+之後我們要來建立資料清理專案，請先安裝R語言(3.6.1)以及Rstudio，然後再安裝packrat套件:
 
     > install.packages('packrat')
 
-R 的版本控管機制比 python麻煩一點，所以我們分兩個部分探討:
+R的版本控管機制比python麻煩一點，所以我們分兩個部分探討:
 
     1. 初始建立datacleaning
     2. git clone 下來後部署環境
 
 (1) 初始建立datacleaning
 
-安裝好相關軟體後，開啟 Rstudio，並點選 Rstudio 視窗上方選項，File -> New Project -> Existing Directory ->
+安裝好相關軟體後，開啟Rstudio，並點選Rstudio視窗上方選項，File -> New Project -> Existing Directory ->
 [選擇SinicaCrawler/crawler/www_example_com/www_example_com/datacleaning] -> 點選 Create Project 按鈕，之後在 R cmd 上輸入:
 
     > packrat::init()
 
-來建立R虛擬環境，此時 R 的 Library 都會安裝在 datacleaning/packrat 之下，假設要安裝ggplot:
+來建立R虛擬環境，此時R的Library都會安裝在datacleaning/packrat之下，假設要安裝ggplot:
 
     > install.packages('ggplot2')
 
@@ -173,8 +173,8 @@ R 的版本控管機制比 python麻煩一點，所以我們分兩個部分探�
     // ............
     // ......
 
-這時 datacleaning/packrat/packrat.lock 會紀錄剛剛安裝的套件版本資訊，snapshot 會紀錄剛剛所安裝的套件，對於長期維運非常的有幫助，
-同時在 datacleaning/packrat 下會有個 .gitignore，我們在裡面加入:
+這時datacleaning/packrat/packrat.lock會紀錄剛剛安裝的套件版本資訊，snapshot會紀錄剛剛所安裝的套件，對於長期維運非常的有幫助，
+同時在datacleaning/packrat下會有個 .gitignore，我們在裡面加入:
 
     packrat/lib*/
     packrat/init.R
@@ -182,27 +182,27 @@ R 的版本控管機制比 python麻煩一點，所以我們分兩個部分探�
     packrat/src
     .Rhistory
 
-.gitignore 是一個隱藏檔，它能協助我們忽略上傳指定的檔案，譬如說有1.xxGb的資料，我們不希望把這麼龐大的資料公開出去，則可以在資料夾底下新增
-此檔案，並寫下我們要忽略的檔案，未來在提交程式碼時， git 會自動幫我們忽略不必要上傳的檔案，所以未來提交專案時， datacleaning/packrat
-只會有 packrat.lock(紀錄套件的檔案)。
+.gitignore是一個隱藏檔，它能協助我們忽略上傳指定的檔案，譬如說有1.xxGb的資料，我們不希望把這麼龐大的資料公開出去，則可以在資料夾底下新增
+此檔案，並寫下我們要忽略的檔案，未來在提交程式碼時， git 會自動幫我們忽略不必要上傳的檔案，所以未來提交專案時，datacleaning/packrat
+只會有packrat.lock(紀錄套件的檔案)。
 
-(2) git clone 下來後部署環境
+(2) git clone下來後部署環境
 
-如果今天從git server clone下來，我們要怎麼重新部署環境？我們先用 Rstudio 開啟原先 datacleaning 專案，點選 Rstudio 視窗上方選項，
+如果今天從git server clone下來，我們要怎麼重新部署環境？我們先用Rstudio開啟原先datacleaning專案，點選Rstudio視窗上方選項，
 File -> Open Project -> [選擇SinicaCrawler/crawler/www_example_com/www_example_com/datacleaning/datacleaning.Rproj]，
-專案就會自動啟動，之後透過 init 重新建立虛擬環境( R 和 python 建立虛擬環境的原理就是把整個原生直譯器複製到指定資料夾底下):
+專案就會自動啟動，之後透過init重新建立虛擬環境(R和python建立虛擬環境的原理就是把整個原生直譯器複製到指定資料夾底下):
 
     > packrat::init()
 
-由於過去我們已經建立 packrat.lock，所以接下來只要把指定套件下載下來就好:
+由於過去我們已經建立packrat.lock，所以接下來只要把指定套件下載下來就好:
 
     > packrat::restore()
 
 之後重新啟動 R session即可開始作業，詳細使用方法可以至套件官方網站查看。
 
 關於程式執行所留下的日誌檔，爬蟲的日誌檔請保留在 data/資料夾底下，格式為Crawler<option>_<日期>.log，option為爬蟲屬性(抓HTML還是pdf)，
-如果被爬取網站有 POST 資訊可以紀錄，可新增 crawlered 檔來紀錄發送過哪些 POST，以免下次重複爬取造成主機負擔；至於資料清理的部分，沒有一定的規範，
-但是清理的錯誤log檔必須在datacleaning/ 資料夾底下，日後爬蟲系統會搜尋日誌檔以及抓取的資料，所以盡可能按照此規範做開發，python 要製作日誌檔可以
+如果被爬取網站有 POST 資訊可以紀錄，可新增crawlered檔來紀錄發送過哪些 POST，以免下次重複爬取造成主機負擔；至於資料清理的部分，沒有一定的規範，
+但是清理的錯誤log檔必須在datacleaning/ 資料夾底下，日後爬蟲系統會搜尋日誌檔以及抓取的資料，所以盡可能按照此規範做開發，python要製作日誌檔可以
 使用logging模組，其他爬蟲專案的plugin.py為日誌檔格式，可依照此檔案做撰寫，謝謝！
 
 
@@ -213,3 +213,25 @@ python class => https://docs.python.org/3/tutorial/classes.html
 scrapy官方網站說明 => https://scrapy.org/doc/
 python modules: logging => https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
 R Library: packrat => https://rstudio.github.io/packrat/
+
+
+(三) tor 與 polipo
+
+[polipo]
+
+Polipo是一個輕量級的跨平台代理伺服器。可以實現HTTP和SOCKS代理。為了最小化延遲，Polipo管線化多個資源請求，在同一個TCP/IP連接上多路復用。
+Polipo具有HTTP 1.1兼容，支持IPv4、IPv6，流量過濾和隱私增強。Polipo是自由軟體，使用MIT許可證。由於scrapy爬蟲不支援SOCKS代理，所以我們必須把
+SOCKS轉換HTTP才能使用tor洋蔥代理伺服器。
+
+[tor]
+
+Tor是實現匿名通訊的自由軟體。其名源於「The Onion Router」（洋蔥路由器）的英語縮寫。用戶可透過Tor接達由全球志願者免費提供，
+包含7000+個中繼的覆蓋網路，從而達至隱藏用戶真實位址、避免網路監控及流量分析的目的。Tor用戶的網際網路活動（包括瀏覽線上網站、
+貼文以及即時訊息等通訊形式）相對較難追蹤。Tor的設計原意在於保障用戶的個人隱私，以及不受監控地進行秘密通訊的自由和能力。
+我們利用tor來取得有限制規則的網站(像是中華黃頁)，但缺點是資料取得時間會增長。
+
+
+[相關說明]
+
+tor 官網 => https://2019.www.torproject.org/docs/documentation.html.en
+polipo 官網 => https://www.irif.fr/~jch/software/polipo/
