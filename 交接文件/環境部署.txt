@@ -1,0 +1,95 @@
+/*************************************
+ *
+ * 撰寫人: 孫培元
+ * 撰寫日期: 2019-08-26
+ * 撰寫人電郵: 404657164@gms.tku.edu.tw
+ *
+ *************************************/
+
+------------------------------------------------------------------------------------------------------
+
+[軟體版本]
+
+python: 3.7.4 (64 bit)
+R: 3.6.1
+tor: 0.4.0.5
+polipo: 1.1.1
+Rstudio: 1.2.1335 以上
+
+------------------------------------------------------------------------------------------------------
+
+[環境部署步驟]
+
+(一) Windows 10 系統
+
+1. 啟動Windows Subsystem Linux
+
+開啟PowerShell(以系統管理員開啟)，並且在PowerShell上執行:
+
+    > Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
+
+執行完成後重新啟動電腦，開機完成後到Microsoft Store安裝Ubuntu 18.04 LTS，並設定使用者資訊:
+
+    使用者帳號:crawler
+    使用者密碼: ==
+
+之後在WSL環境中執行腳本:
+
+    > sudo apt update && sudo apt upgrade -y
+    > sudo apt install git -y
+    > git clone https://github.com/SUN-PEI-YUAN/SinicaCrawler.git
+
+以上腳本皆在crawler家目錄底下執行，進入爬蟲專案:
+
+    > cd ~/SinicaCrawler
+
+確認以上過程沒有出現任何問題，之後再安裝軟體，以免後續發生問題。
+
+2. 在WSL上安裝polipo與tor與部署WSL系統(複製tor與polipo設定檔文件到子系統中)
+
+執行腳本installsoftware.sh和buildsystem.sh(記得要輸入密碼才能安裝軟體):
+
+    > chmod -R a+x system/
+    > ./system/installsoftware.sh
+    > ./system/installpython.sh
+    > ./system/buildsystem.sh
+
+3. 安裝python-3.7.4 與 R-3.6.1
+
+4. 建立python虛擬環境與安裝python相依套件(在資料夾結構.txt有說明)
+
+
+(二) Unix 系統(Linux/macOS)
+
+1. 安裝tor與polipo軟體
+
+linux(bebian/ubuntu):
+
+    > chmod -R a+x system/
+    > ./system/installsoftware.sh
+    > ./system/installpython.sh
+    > ./system/buildsystem.sh
+
+macOS:
+
+    > /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    > brew install tor polipo
+
+2. 使用pyenv安裝python-3.7.4(macOS)
+
+    > git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+    > echo 'export PYENV_ROOT="/home/crawler/.pyenv"' >> ~/.bashrc
+    > echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+    > echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bashrc
+    > source ~/.bashrc
+
+4. 利用github/Rsource安裝R-3.6.1 (暫時不需要)
+
+5. 建立python虛擬環境與安裝python相依套件(在資料夾結構.txt有說明)
+
+
+[參考說明]
+
+WSL => https://docs.microsoft.com/en-us/windows/wsl/about
+homebrew => https://brew.sh/index_zh-tw
+git => https://git-scm.com/
