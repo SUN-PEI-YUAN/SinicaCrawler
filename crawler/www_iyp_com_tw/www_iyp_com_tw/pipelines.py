@@ -41,12 +41,12 @@ class CsvPipeline(object):
         except ImportError:
             import Image
         
-        if os.path.exists(item['img_path']):
+        if os.path.exists(item['phone_num']):
             try:
-                with Image.open(item['img_path']) as img:
+                with Image.open(item['phone_num']) as img:
                     item['phone_num'] = pytesseract.image_to_string(img)
             except:                    
-                item['phone_num'] = item['img_path']
+                item['phone_num'] = 'NULL'
         else: 
             item['phone_num'] = 'NULL'
 
