@@ -47,8 +47,6 @@ class CsvPipeline(object):
                     item['phone_num'] = pytesseract.image_to_string(img)
             except:                    
                 item['phone_num'] = item['img_path']
-            finally:
-                remove(item['img_path'])
         else: 
             item['phone_num'] = 'NULL'
 
