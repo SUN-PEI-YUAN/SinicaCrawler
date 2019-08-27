@@ -34,6 +34,24 @@ class CsvPipeline(object):
         self.file.write(self.header)
 
     def process_item(self, item, spider):
+        # 先提取數字之後放回csv資料當中
+        import pytesseract
+        try:
+            from PIL import Image
+        except ImportError:
+            import Image
+        
+        if os.path.exists(item['img_path']):
+            try:
+                with Image.open(item['img_path']) as img:
+                    item['phone_num'] = pytesseract.image_to_string(img)
+            except:                    
+                item['phone_num'] = item['img_path']
+            finally:
+                remove(item['img_path'])
+        else: 
+            item['phone_num'] = 'NULL'
+
         row_data = f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']}\n"
         self.file.write(row_data)
         return item
