@@ -1,6 +1,6 @@
 #coding: utf-8
+from math import ceil
 import logging
-
 
 class Log(object):
     '''日誌格式'''
@@ -40,3 +40,10 @@ class Log(object):
             self._log.info(self.log_format, *msg)
         if level == 'warning':
             self._log.warning(self.log_format, *msg)
+
+
+def list_chunk(li, chunk_size):
+    '''將list分成chunk_size等分'''
+    chk = int(ceil(len(li) / float(chunk_size)))
+    new_li = [li[i:i + chk] for i in range(0, len(li), chk)]
+    return new_li

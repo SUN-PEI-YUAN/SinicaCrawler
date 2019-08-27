@@ -3,7 +3,7 @@ from www_iyp_com_tw.items import WwwIypComTwItem
 from scrapy.exporters import CsvItemExporter
 from www_iyp_com_tw.crawler_setting import *
 from scrapy.crawler import CrawlerProcess
-from www_iyp_com_tw.plugin import Log
+from www_iyp_com_tw.plugin import Log, list_chunk
 from urllib.parse import urljoin
 from os import makedirs
 import os.path
@@ -21,7 +21,7 @@ HTML_LOG = Log(logger_name='html', log_fname=HTML_LOGFNAME,
 
 
 class CrawlerSpider(scrapy.Spider):
-    name = 'crawler'
+    name = 'crawler_2'
 
     custom_settings = {
         'IMAGES_STORE': SAVE_PATH,
@@ -36,8 +36,11 @@ class CrawlerSpider(scrapy.Spider):
 
     def parse(self, response):
         '''取得所有要訪問的連結'''
-        hrefs = response.xpath(
-            '//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
+        hrefs = response.xpath('//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
+
+        # 分散爬蟲
+        hrefs = list_chunk(hrefs, 6)[2]
+
         for url in hrefs:
             yield scrapy.Request(urljoin(INDEX, url), callback=self.parsedata)
 
@@ -67,7 +70,6 @@ class CrawlerSpider(scrapy.Spider):
             item['second_label'] = snd
             item['third_label'] = trd
             item['store_name'] = store_name
-            # item['phone_url'] = phone_url
             item['phone_num'] = phone_num
             item['address'] = address
             yield item
@@ -81,26 +83,3 @@ class CrawlerSpider(scrapy.Spider):
 
         if next_page is not None:
             yield response.follow(next_page, self.parsedata)
-
-
-        # 先提取數字之後放回csv資料當中
-        # import pytesseract
-        # try:
-        #     from PIL import Image
-        # except ImportError:
-        #     import Image
-        # while True:
-            # if os.path.exists(item['img_path']):
-            #     try_freq = 0
-            #     try:
-            #         with Image.open(item['img_path']) as img:
-            #             item['phone_num'] = pytesseract.image_to_string(img)
-            #             remove(item['img_path'])
-            #     except:
-            #         try_freq += 1
-            #         if try_freq < 5:
-            #             sleep(1)  
-            #             continue
-            #         else:
-            #             item['phone_num'] = item['img_path']
-            # break
