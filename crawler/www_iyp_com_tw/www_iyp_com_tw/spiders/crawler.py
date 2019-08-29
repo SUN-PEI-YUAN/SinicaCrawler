@@ -21,7 +21,7 @@ HTML_LOG = Log(logger_name='html', log_fname=HTML_LOGFNAME,
 
 
 class CrawlerSpider(scrapy.Spider):
-    name = 'crawler_2'
+    name = 'crawler_0'
 
     custom_settings = {
         'IMAGES_STORE': SAVE_PATH,
@@ -39,7 +39,7 @@ class CrawlerSpider(scrapy.Spider):
         hrefs = response.xpath('//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
 
         # 分散爬蟲
-        hrefs = list_chunk(hrefs, 6)[2]
+        hrefs = list_chunk(hrefs, <total_server_num>)[<cluster_num>]
 
         for url in hrefs:
             yield scrapy.Request(urljoin(INDEX, url), callback=self.parsedata)
