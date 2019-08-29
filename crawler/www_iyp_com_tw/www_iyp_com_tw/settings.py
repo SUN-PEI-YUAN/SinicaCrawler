@@ -72,8 +72,9 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'scrapy.pipelines.images.ImagesPipeline': None,
-   'www_iyp_com_tw.pipelines.ImagePipeline': 1,
+   # 暫時關閉電話號碼資料取得
+   # 'scrapy.pipelines.images.ImagesPipeline': None,
+   # 'www_iyp_com_tw.pipelines.ImagePipeline': 1,
    'www_iyp_com_tw.pipelines.WwwIypComTwPipeline': 299,
    'www_iyp_com_tw.pipelines.CsvPipeline': 996,
 }

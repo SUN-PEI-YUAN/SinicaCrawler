@@ -21,7 +21,7 @@ HTML_LOG = Log(logger_name='html', log_fname=HTML_LOGFNAME,
 
 
 class CrawlerSpider(scrapy.Spider):
-    name = 'crawler_0'
+    name = 'crawler'
 
     custom_settings = {
         'IMAGES_STORE': SAVE_PATH,
