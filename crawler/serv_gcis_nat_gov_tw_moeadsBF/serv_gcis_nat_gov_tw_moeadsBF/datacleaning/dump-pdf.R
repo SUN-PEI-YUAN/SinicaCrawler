@@ -38,7 +38,8 @@ is.goverment <- function(x, ...) {
   #
   # Returns:
   #   logical
-  cond <- '[基隆|新竹|台中|雲林|台南|屏東|台東|金門|彰化|新北|台北|新竹|臺中|嘉義|臺南|宜蘭|臺東|連江|[新北|台北|新竹|臺中|嘉義|臺南|宜蘭|臺東|連江|臺北|苗栗|南投|嘉義|高雄|花蓮|澎湖|桃園][縣|市]政府'
+  cond1 <- '[基隆|新竹|台中|雲林|台南|屏東|台東|金門|彰化|新北|台北|新竹|臺中|嘉義|臺南|宜蘭|臺東|連江|[新北|台北|新竹|臺中|嘉義|臺南|宜蘭|臺東|連江|臺北|苗栗|南投|嘉義|高雄|花蓮|澎湖|桃園][縣|市]政府'
+  cond2 <- '臺北市商業處'
   # gov.name <- c(
   #   "基隆市政府", "新北市政府", "臺北縣政府", 
   #   "台北縣政府", "台北巿政府", "臺北巿政府", 
@@ -52,7 +53,7 @@ is.goverment <- function(x, ...) {
   #   "彰化縣政府"
   # )
   # return(x %in% gov.name)
-  return(grepl(pattern = cond, x = x))
+  return(grepl(pattern = cond1, x = x) | grepl(pattern = cond2, x = x))
 }
 
 is.address <- function(x, simpleCheck = FALSE, custom = NULL, use.place = FALSE, ...) {
@@ -527,30 +528,41 @@ dumpText <- function(pdfpath, delectHeader = c(-1, -2, -3), errorLogPath='pdfErr
         x <- x[x != '']
         # print(x)
         # browser()
+        
+        ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
+        
+        o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
+        file.copy(pdfpath, o)
+        file.remove(pdfpath)
+        
         return(x)        
       })
 
     }, error = function(e) {
       ### 輸出 error.log ###
-      if (!file.exists(errorLogPath))
-      {
-        errorLogPath <- file(errorLogPath)
-      }
-      else
-      {
-        errorLogPath <- errorLogPath
-      }
+      
+      # 如果格式為登記清冊
+      # result <- tryCatch()
+      
+      
+      
+      
+      errorLogPath <- file(description = errorLogPath, open = 'a', encoding = 'UTF-8')
+      
       errorMsg <- sprintf("[%s] PDF: %s | status: %s", Sys.time(), pdfpath, e)
-      write(errorMsg, file = errorLogPath, append = TRUE)
+      # write(errorMsg, file = errorLogPath, append = TRUE)
+      writeLines(errorMsg, con = errorLogPath, useBytes = TRUE, sep = '')
+      close(errorLogPath)
       ### 輸出 error.log ###
+      
+      ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
+      
+      # o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(失敗)/')
+      # file.copy(pdfpath, o)
+      # file.remove(pdfpath)
+      
     })
     
-    ### 將擋案輸出至指定位置，並移除原先位置的檔案 ###
-    
-    # o <- makePath(pdfpath, newPath = '../data/經濟部-商業登記資料查詢pdf(完成)/')
-    # file.copy(pdfpath, o)
-    # file.remove(pdfpath)
-
     return(result)
     
   }
@@ -580,39 +592,3 @@ json_dump <- function(i, o = NULL, outdir = './經濟部-商業登記資料查�
   
   writeLines(jsontext, ofile, useBytes=TRUE)
 }
-
-
-
-DATA_PATH <- '../data/經濟部-商業登記資料查詢pdf/'
-
-SAVE_PATH <- '../data/經濟部-商業登記資料查詢pdf(封存)/'
-
-OUTPUT_DATA <- './經濟部-商業登記資料查詢json/'
-
-  
-. <- list.files(DATA_PATH, full.names = TRUE, pattern = '登記清冊.pdf$')
-
-dir.create(SAVE_PATH)
-
-file.copy(from = ., to = makePath(filepath = ., newPath = SAVE_PATH))
-
-file.remove(.)
-
-
-
-pdf_list <- list.files(DATA_PATH, full.names = TRUE, pattern = '項目清冊.pdf$')
-
-creates <- list.files(DATA_PATH, full.names = TRUE, pattern = '.設立.+項目清冊.pdf$')
-replaces <- list.files(DATA_PATH, full.names = TRUE, pattern = '.變更.+項目清冊.pdf$')
-deletes <- list.files(DATA_PATH, full.names = TRUE, pattern = '.解散.+項目清冊.pdf$')
-
-
-
-for (filename in creates) {
-  print(paste0('>>> ', filename))
-  json_dump(filename)
-}
-
-
-dumpText(file.path(DATA_PATH,  '台中市政府108年03月商業解散登記營業項目清冊.pdf'))
-
