@@ -39,7 +39,7 @@ class CrawlerSpider(scrapy.Spider):
         hrefs = response.xpath('//*[@id="category-list"]/li/div/ul/li/ul/li/div/a/@href').getall()
 
         # 分散爬蟲
-        hrefs = list_chunk(hrefs, <total_server_num>)[<cluster_num>]
+        # hrefs = list_chunk(hrefs, <total_server_num>)[<cluster_num>]
 
         for url in hrefs:
             yield scrapy.Request(urljoin(INDEX, url), callback=self.parsedata)

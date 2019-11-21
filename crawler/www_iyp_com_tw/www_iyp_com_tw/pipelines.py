@@ -51,7 +51,7 @@ class CsvPipeline(object):
         #     item['phone_num'] = 'NULL'
 
         # row_data = f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['phone_num']},{item['address']}\n"
-        row_data = f"{item['first_label']},{item['second_label']},{item['third_label']},{item['store_name']},{item['address']}\n"
+        row_data = f"\"{item['first_label']}\",\"{item['second_label']}\",\"{item['third_label']}\",\"{item['store_name']}\",\"{item['address']}\"\n"
         self.file.write(row_data)
         return item
 
@@ -59,14 +59,14 @@ class CsvPipeline(object):
         self.file.close()
 
 
-class ImagePipeline(ImagesPipeline):
+# class ImagePipeline(ImagesPipeline):
 
-    def get_media_requests(self, item, info):
-        yield Request(item['phone_num'])
+#     def get_media_requests(self, item, info):
+#         yield Request(item['phone_num'])
 
-    def item_completed(self, results, item, info):
-        image_paths = [x['path'] for ok, x in results if ok]
-        if not image_paths:
-            raise DropItem("Item contains no images")
-        item['phone_num'] = os.path.join(SAVE_PATH, image_paths[0])
-        return item
+#     def item_completed(self, results, item, info):
+#         image_paths = [x['path'] for ok, x in results if ok]
+#         if not image_paths:
+#             raise DropItem("Item contains no images")
+#         item['phone_num'] = os.path.join(SAVE_PATH, image_paths[0])
+#         return item
